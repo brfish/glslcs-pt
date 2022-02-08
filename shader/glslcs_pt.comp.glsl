@@ -52,10 +52,8 @@ struct IntersectionRecord {
     uint        id;
     vec3        point;
     vec3        normal;
-    vec3        orientedNormal;
     vec3        surfaceColor;
     SurfaceType surfaceType;
-    bool        into;
 };
 
 struct Complex {
@@ -172,17 +170,15 @@ bool intersectScene(const in Ray ray, out IntersectionRecord intersection) {
     // Compute the information of intersection.
     vec3 point = ray.origin + t * ray.direction;
     vec3 normal = normalize(point - sceneObjects.objects[id].position);
-    bool into = dot(normal, ray.direction) < 0.0;
-    vec3 orientedNormal = into ? normal : -normal;
     vec3 color = sceneObjects.objects[id].material.color;
     SurfaceType type = sceneObjects.objects[id].material.surfaceType;
-    intersection = IntersectionRecord(id, point, normal, orientedNormal, color, type, into);
+    intersection = IntersectionRecord(id, point, normal, color, type);
     return true;
 }
 
 bool isIntersectedScene(const in Ray ray, const in float maxt) {
     float t;
-    for (int i = sceneObjects.size - 1; i >= 0; --i) {
+    for (int i = 0; i < sceneObjects.size; ++i) {
         if (intersect(sceneObjects.objects[i], ray, t) && t < maxt)
             return true;
     }
