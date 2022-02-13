@@ -24,7 +24,7 @@ add_subdirectory(extern)
 # Build main target.
 add_executable(glslcs-pt ${CSPT_SOURCES})
 target_include_directories(glslcs-pt PRIVATE ${CSPT_INCLUDE_DIR})
-target_link_libraries(glslcs-pt glad::glad glfw::glfw glm::glm stb::stb)
+target_link_libraries(glslcs-pt argparse::argparse glad::glad glfw::glfw glm::glm stb::stb)
 target_compile_options(glslcs-pt PRIVATE "-Wno-volatile")
 
 # Copy assets after build.

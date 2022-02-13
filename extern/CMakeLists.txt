@@ -1,5 +1,8 @@
 ##################### BUILD EXTERNAL LIBRARIES #####################
 
+# Build argparse
+add_subdirectory(argparse)
+
 # Build glad.
 add_library(glad STATIC "glad/src/glad.c")
 add_library(glad::glad ALIAS glad)
