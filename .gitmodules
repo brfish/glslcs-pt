@@ -4,3 +4,6 @@
 [submodule "extern/glm"]
 	path = extern/glm
 	url = git@github.com:g-truc/glm.git
+[submodule "extern/glfw3"]
+	path = extern/glfw3
+	url = git@github.com:glfw/glfw.git
