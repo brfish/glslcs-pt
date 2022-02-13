@@ -1,3 +1,6 @@
 [submodule "extern/argparse"]
 	path = extern/argparse
 	url = git@github.com:p-ranav/argparse.git
+[submodule "extern/glm"]
+	path = extern/glm
+	url = git@github.com:g-truc/glm.git
