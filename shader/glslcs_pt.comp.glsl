@@ -69,7 +69,7 @@ struct Complex {
 };
 
 /* ==================== Inputs ==================== */
-layout(local_size_x = 8, local_size_y = 6) in;
+layout(local_size_x = 16, local_size_y = 16) in;
 
 layout(rgba32f, binding = 0) uniform image2D uImageOut;
 
@@ -84,10 +84,10 @@ layout(std430, binding = 2) readonly buffer SceneLightBuffer {
 } sceneLights;
 
 /* ==================== Uniforms ==================== */
-uniform Camera uCamera;
-uniform int uMaxBounce;
-uniform int uRRStartBounce;
-uniform int uSpp;
+layout(location = 0) uniform Camera uCamera;
+layout(location = 4) uniform int uMaxBounce;
+layout(location = 5) uniform int uRRStartBounce;
+layout(location = 6) uniform int uSpp;
 
 /* ==================== PCG Random ==================== */
 // [1] Jarzynski, M., & Olano, M. (2020). Hash Functions for GPU Rendering.

@@ -28,8 +28,8 @@ constexpr uint32_t kImageHeight  = 768;
 constexpr uint32_t kWindowWidth  = 1024;
 constexpr uint32_t kWindowHeight = 768;
 
-constexpr uint32_t kTileWidth    = 128;
-constexpr uint32_t kTileHeight   = 128;
+constexpr uint32_t kTileWidth    = 16;
+constexpr uint32_t kTileHeight   = 16;
 
 const std::string kCSPath = "shader/glslcs_pt.comp.glsl";
 const std::string kVSPath = "shader/display.vert.glsl";
@@ -181,25 +181,16 @@ struct Config {
 };
 
 static void uniformCamera(const ComputeShader &shader, const Camera &camera) {
-    GLint loc;
-    loc = glGetUniformLocation(shader, "uCamera.position");
-    glUniform3fv(loc, 1, glm::value_ptr(camera.position));
-    loc = glGetUniformLocation(shader, "uCamera.gaze");
-    glUniform3fv(loc, 1, glm::value_ptr(camera.gaze));
-    loc = glGetUniformLocation(shader, "uCamera.fov");
-    glUniform1f(loc, camera.fov);
-    loc = glGetUniformLocation(shader, "uCamera.resolution");
-    glUniform2uiv(loc, 1, glm::value_ptr(camera.resolution));
+    glUniform3fv(0, 1, glm::value_ptr(camera.position));
+    glUniform3fv(1, 1, glm::value_ptr(camera.gaze));
+    glUniform1f(2, camera.fov);
+    glUniform2uiv(3, 1, glm::value_ptr(camera.resolution));
 }
 
 static void uniformConfig(const ComputeShader &shader, const Config &config) {
-    GLint loc;
-    loc = glGetUniformLocation(shader, "uMaxBounce");
-    glUniform1i(loc, config.maxBounce);
-    loc = glGetUniformLocation(shader, "uRRStartBounce");
-    glUniform1i(loc, config.enableRR ? config.rrStartBounce : -1);
-    loc = glGetUniformLocation(shader, "uSpp");
-    glUniform1i(loc, config.spp);
+    glUniform1i(4, config.maxBounce);
+    glUniform1i(5, config.enableRR ? config.rrStartBounce : -1);
+    glUniform1i(6, config.spp);
 }
 
 static void loadScene(const std::string &path, Scene &scene) {
@@ -361,7 +352,9 @@ int32_t main(int32_t argc, const char **argv) {
     glUseProgram(computeProgram);
     uniformCamera(computeProgram, mainScene.mainCamera);
     uniformConfig(computeProgram, config);
-    glDispatchCompute(kTileWidth, kTileHeight, 1);
+    int32_t wTileSize = std::ceil(kImageWidth / static_cast<float>(kTileWidth));
+    int32_t hTileSize = std::ceil(kImageHeight / static_cast<float>(kTileHeight));
+    glDispatchCompute(wTileSize, hTileSize, 1);
     glMemoryBarrier(GL_SHADER_IMAGE_ACCESS_BARRIER_BIT);
 
     glEndQuery(GL_TIME_ELAPSED);
