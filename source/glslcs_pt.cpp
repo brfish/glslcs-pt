@@ -14,6 +14,15 @@
 #include "glm/gtc/type_ptr.hpp"
 #include "stb/stb_image_write.h"
 
+static constexpr uint32_t kDefaultImageWidth       = 1024;
+static constexpr uint32_t kDefaultImageHeight      = 768;
+static constexpr int32_t  kDefaultSpp              = 256;
+static constexpr int32_t  kDefaultMaxBounce        = 8;
+static constexpr int32_t  kDefaultRRStartBounce    = 4;
+
+static const std::string kDefaultSceneFile   = "scene/cornell.txt";
+static const std::string kDefaultOutputFile  = "image.exr";
+
 constexpr uint32_t kImageWidth   = 1024;
 constexpr uint32_t kImageHeight  = 768;
 constexpr uint32_t kWindowWidth  = 1024;
@@ -161,10 +170,14 @@ struct Scene {
 };
 
 struct Config {
-    int32_t maxBounce;
-    bool    enableRR;
-    int32_t rrStartBounce;
-    int32_t spp;
+    uint32_t    outputWidth;
+    uint32_t    outputHeight;
+    std::string outputFile;
+    std::string sceneFile;
+    int32_t     maxBounce;
+    bool        enableRR;
+    int32_t     rrStartBounce;
+    int32_t     spp;
 };
 
 static void uniformCamera(const ComputeShader &shader, const Camera &camera) {
@@ -247,7 +260,7 @@ static void loadScene(const std::string &path, Scene &scene) {
 Scene mainScene;
 Config config;
 
-int main(int argc, const char **args) {
+int32_t main(int32_t argc, const char **argv) {
     // Initialize GLFW and create display window.
     glfwInit();
     glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
@@ -360,6 +373,7 @@ int main(int argc, const char **args) {
     GLint64 elapsed;
     glGetQueryObjecti64v(timeQuery, GL_QUERY_RESULT, &elapsed);
     std::printf("Time cost: %fs\n", elapsed / 1000000000.0);
+    glDeleteQueries(1, &timeQuery);
 
     // Write the result image to a file.
     GLuint fb;
@@ -367,7 +381,6 @@ int main(int argc, const char **args) {
     glBindFramebuffer(GL_FRAMEBUFFER, fb);
     glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, imageOut, 0);
     float *imageData = new float[kImageWidth * kImageHeight * 4];
-    unsigned char *imageBytesData = new unsigned char[kImageWidth * kImageHeight * 4];
     glReadPixels(0, 0, kImageWidth, kImageHeight, GL_RGBA, GL_FLOAT, imageData);
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
     glDeleteFramebuffers(1, &fb);

@@ -20,7 +20,7 @@
 
 // Index of refraction.
 #define IOR_VACUUM                          1.0
-#define IOR_GLASS                           1.7
+#define IOR_GLASS                           1.5
 
 /* ==================== Types ==================== */
 struct Camera {
@@ -48,6 +48,14 @@ struct Sphere {
     Material    material;
 };
 
+struct AABB {
+    vec3 minp, maxp;
+};
+
+struct Triangle {
+    vec3 p0, p1, p2;
+};
+
 struct IntersectionRecord {
     uint        id;
     vec3        point;
@@ -66,8 +74,8 @@ layout(local_size_x = 8, local_size_y = 6) in;
 layout(rgba32f, binding = 0) uniform image2D uImageOut;
 
 layout(std430, binding = 1) readonly buffer SceneObjectBuffer {
-    int size;
-    Sphere objects[];
+    int     size;
+    Sphere  objects[];
 } sceneObjects;
 
 layout(std430, binding = 2) readonly buffer SceneLightBuffer {
@@ -151,6 +159,64 @@ bool intersect(const in Sphere sphere, const in Ray ray, out float t) {
         t = result;
     else
         return false;    
+    return true;
+}
+
+bool intersect(const in AABB box, const in Ray ray, out float t) {
+    ivec3 signs = ivec3(lessThan(ray.direction, vec3(0.0)));
+    vec3 invDirection = 1.0 / ray.direction;
+    vec3 points[2] = {box.minp, box.maxp};
+
+    vec2 dx = vec2(points[signs.x].x, points[1 - signs.x].x) - vec2(ray.origin.x);
+    vec2 dy = vec2(points[signs.y].y, points[1 - signs.y].y) - vec2(ray.origin.y);
+    dx *= invDirection.x;
+    dy *= invDirection.y;
+
+    if (dx.x > dy.y || dx.y < dy.x)
+        return false;
+    
+    dx.x = max(dx.x, dy.x);
+    dx.y = min(dx.y, dy.y);
+
+    vec2 dz = vec2(points[signs.z].z, points[1 - signs.z].z) - vec2(ray.direction.z);
+    dz *= invDirection.z;
+
+    if (dx.x > dz.y || dx.y < dz.x)
+        return false;
+    
+    dx.x = max(dx.x, dz.x);
+    dx.y = min(dx.y, dz.y);
+    
+    if (dx.x > M_EPSILON)
+        t = dx.x;
+    else if (dx.y > M_EPSILON)
+        t = dx.y;
+    else
+        return false;
+    return true;
+}
+
+bool intersect(const in Triangle triangle, const in Ray ray, out float t) {
+    vec3 p[3] = {triangle.p0, triangle.p1, triangle.p2};
+    vec3 e1 = p[1] - p[0], e2 = p[2] - p[0];
+    vec3 h = cross(ray.direction, e2);
+    float a = dot(e1, h);
+    if (a > -M_EPSILON && a < M_EPSILON)
+        return false;
+    a = 1.0 / a;
+    vec3 s = ray.direction - p[0];
+    float u = a * dot(s, h);
+    if (u < 0.0 || u > 1.0)
+        return false;
+    vec3 q = cross(s, e1);
+    float v = a * dot(ray.direction, q);
+    if (v < 0.0 || u + v > 1.0)
+        return false;
+    float d = a * dot(e2, q);
+    if (d > M_EPSILON)
+        t = d;
+    else
+        return false;
     return true;
 }
 
@@ -256,7 +322,7 @@ bool fresnel(in float cosI, in float etaI, in float etaT,
 }
 
 bool schlickFresnel(in float cosI, in float etaI, in float etaT,
-                   out float fr, out float ft) {
+                    out float fr, out float ft) {
     float eta = etaI / etaT;
     if (cosI < 0.0) {
         eta = etaT / etaI;
