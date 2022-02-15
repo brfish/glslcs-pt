@@ -201,7 +201,7 @@ static void loadScene(const std::string &path, Scene &scene) {
     scene.lights.push_back(0);
     while (std::getline(input, line)) {
         size_t p = line.find_first_not_of(' ');
-        if (line[p] == '#' || line.empty())
+        if (line.empty() || p == std::string::npos || line[p] == '#')
             continue;
         std::stringstream ls {line};
         std::string type;
@@ -240,7 +240,7 @@ static void loadScene(const std::string &path, Scene &scene) {
             int index;
             ls >> index;
             scene.lights.push_back(index);
-            scene.lights.front() = scene.lights.size() - 1;
+            scene.lights.front() = static_cast<int32_t>(scene.lights.size()) - 1;
         } else {
             std::printf("unknown type: %s\n", type.c_str());
             std::abort();
@@ -259,6 +259,7 @@ int32_t main(int32_t argc, const char **argv) {
     glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
     glfwWindowHint(GLFW_SAMPLES, 4);
     glfwWindowHint(GLFW_RESIZABLE, GLFW_FALSE);
+    glfwWindowHint(GLFW_VISIBLE, GLFW_FALSE);
     GLFWwindow *window = glfwCreateWindow(kWindowWidth, kWindowHeight, "GLSL-CS Path Tracer", nullptr, nullptr);
     glfwMakeContextCurrent(window);
     gladLoadGLLoader(reinterpret_cast<GLADloadproc>(glfwGetProcAddress));
@@ -352,8 +353,8 @@ int32_t main(int32_t argc, const char **argv) {
     glUseProgram(computeProgram);
     uniformCamera(computeProgram, mainScene.mainCamera);
     uniformConfig(computeProgram, config);
-    int32_t wTileSize = std::ceil(kImageWidth / static_cast<float>(kTileWidth));
-    int32_t hTileSize = std::ceil(kImageHeight / static_cast<float>(kTileHeight));
+    int32_t wTileSize = static_cast<int32_t>(std::ceil(kImageWidth / static_cast<float>(kTileWidth)));
+    int32_t hTileSize = static_cast<int32_t>(std::ceil(kImageHeight / static_cast<float>(kTileHeight)));
     glDispatchCompute(wTileSize, hTileSize, 1);
     glMemoryBarrier(GL_SHADER_IMAGE_ACCESS_BARRIER_BIT);
 
@@ -381,6 +382,7 @@ int32_t main(int32_t argc, const char **argv) {
     stbi_write_hdr("image.exr", kImageWidth, kImageHeight, 4, imageData);
     delete[] imageData;
 
+    glfwShowWindow(window);
     // Main loop.
     while (!glfwWindowShouldClose(window)) {
         // Show the result.
